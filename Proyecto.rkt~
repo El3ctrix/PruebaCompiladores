@@ -15,7 +15,7 @@
 ;; Definición del predicado que verifica las primitivas del lenguaje
 (define primitive?
         (lambda (pr)
-          (memq pr '(+ - * / < > equal? iszero? ++ -- and or not length car cdr))))
+          (memq pr '(+ - * / < > equal? iszero? ++ -- and or length car cdr))))
 
 ;; Definición del predicado que verifica los tipos
 ;; Int | Char | Bool | Lambda | List | (List of T) | (T → T)
@@ -55,17 +55,18 @@
    (type (t)))
   (Expr (e body)
     x
+    pr
     c
     l
+    t
     s
-    pr
+    (pr c* ... c)
     (begin e* ... e)
     (if e0 e1)
     (if e0 e1 e2)
     (lambda ([x* t*] ...) body* ... body)
     (let ([x* t* e*] ...) body* ... body)
     (letrec ([x* t* e*] ...) body* ... body)
-    (list e* e)
     (e0 e1 ...)))
 
 (define-language L1
@@ -672,4 +673,4 @@
                                        `(letfun ,body))]))
 
 (define (back-end str)
-  (remove-logical-operators(make-explicit(remove-string(remove-one-armed-if(parser-LF str))))))
+  (remove-string(remove-one-armed-if(parser-LF str))))
