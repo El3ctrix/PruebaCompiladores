@@ -238,6 +238,28 @@
                           [(or? pr) `(if ,e0* #t ,e1*)]
                           [else `(,pr ,e0* ,e1*)])]))
 
+(define-pass remove-arit-operators : L4 (ir) -> L4()
+  (definitions
+    (define (++? x)
+      (memq x '(++)))
+    (define (--? x)
+      (memq x '(--)))
+    (define (<? x)
+      (memq x '(<)))
+    (define (>? x)
+      (memq x '(>)))
+    (define (eq? x)
+      (memq x '(equal?)))
+    (define (zer? x)
+      (memq x '(iszero?))))
+  (Expr : Expr (ir) -> Expr ()
+        [(,pr ,[e0*]) (cond
+                        [(++? pr) `(+ ,e0* 1)]
+                        [(--? pr) `(- ,e0* 1)]
+                        [(zer? pr) `(equal? ,e0* 0)])]
+        [(,pr ,[e0*] ,[e1*]) (cond
+                               [(<? pr) ]
+                               [(>? pr) ])]))
 ; Tabla con sus valores para el ejercicio 2
 (define ht (make-hash))
 (hash-set! ht '+ 'Integer)
