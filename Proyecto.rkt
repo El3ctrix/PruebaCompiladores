@@ -38,7 +38,7 @@
 (define (ArrayLength? x)
   (integer? x))
 
-(define (log-primitive? x) (memq x '(+ - * / length car cdr void)))
+(define (log-primitive? x) (memq x '(+ - * / ++ -- < > equal? length car cdr void)))
 
 (define (c-quote? x)
   (or (integer? x)
@@ -200,7 +200,7 @@
 (define-pass remove-one-armed-if : LF(ir) -> L1 ()
   (Expr : Expr (ir) -> Expr ()
         [(if ,[e0] ,[e1]) `(if ,e0 ,e1 (void))]
-        [(if ,[e0] ,[e1] ,[e2]) '(if ,e0 ,e1 ,e2)]))
+        [(if ,[e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]))
 
 ;; Procesp del compilador encargado de eliminar las cadenas como elementos
 ;; terminales del lenguaje.
@@ -238,28 +238,17 @@
                           [(or? pr) `(if ,e0* #t ,e1*)]
                           [else `(,pr ,e0* ,e1*)])]))
 
+;; Proceso para el Ejercicio 4 del Proyecto (Agregar mas primitivas al lenguaje)
 (define-pass remove-arit-operators : L4 (ir) -> L4()
-  (definitions
-    (define (++? x)
-      (memq x '(++)))
-    (define (--? x)
-      (memq x '(--)))
-    (define (<? x)
-      (memq x '(<)))
-    (define (>? x)
-      (memq x '(>)))
-    (define (eq? x)
-      (memq x '(equal?)))
-    (define (zer? x)
-      (memq x '(iszero?))))
   (Expr : Expr (ir) -> Expr ()
-        [(,pr ,[e0*]) (cond
-                        [(++? pr) `(+ ,e0* 1)]
-                        [(--? pr) `(- ,e0* 1)]
-                        [(zer? pr) `(equal? ,e0* 0)])]
-        [(,pr ,[e0*] ,[e1*]) (cond
-                               [(<? pr) ]
-                               [(>? pr) ])]))
+        [(,pr , [e0*]) (cond
+                        [(equal? '++ pr) `(+ ,e0* 1)]
+                        [(equal? '-- pr) `(- ,e0* 1)]
+                        [(equal? 'iszero? pr) `(equal? ,e0* 0)]
+                        [else error "Error 1 :v"])]
+        [(,pr , [e0*] ,[e1*]) (cond
+                                [(equal? '++ pr) `,(+ e0* 1)]
+                                [else error "Error 2 :v"])]))
 ; Tabla con sus valores para el ejercicio 2
 (define ht (make-hash))
 (hash-set! ht '+ 'Integer)
@@ -285,9 +274,9 @@
 ; Ejercicio 3
 (define-pass quote-const : L5(ir) -> L6()
   (Expr : Expr(ir) -> Expr()
-        [,c `(cuote ,c)]))
+        [,c `(quot ,c)]))
 
-
+;; (back-end '(if (not (or #t #f)) "hola" (++ 5)))
 ;;------------------------------------------------------------Practica 4
 
 ;Proceso curry-let
@@ -694,4 +683,9 @@
                                        `(letfun ,body))]))
 
 (define (back-end str)
-  (remove-logical-operators(make-explicit(remove-string(remove-one-armed-if(parser-LF str))))))
+  (eta-expand
+   (remove-arit-operators
+    (remove-logical-operators
+     (make-explicit
+      (remove-string
+       (remove-one-armed-if(parser-LF str))))))))
